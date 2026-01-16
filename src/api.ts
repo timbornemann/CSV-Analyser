@@ -1,0 +1,30 @@
+import { invoke } from "@tauri-apps/api/core";
+
+export interface DataRow {
+  [key: string]: string | number | null;
+}
+
+export async function loadCsv(path: string): Promise<number> {
+  return await invoke("load_csv", { path });
+}
+
+export async function getTotalRows(): Promise<number> {
+  return await invoke("get_total_rows");
+}
+
+export async function getColumns(): Promise<string[]> {
+  return await invoke("get_columns");
+}
+
+export async function getRows(offset: number, limit: number): Promise<DataRow[]> {
+  const json = await invoke<string>("get_rows", { offset, limit });
+  return JSON.parse(json);
+}
+
+export async function applySort(column: string, descending: boolean): Promise<number> {
+  return await invoke("apply_sort", { column, descending });
+}
+
+export async function applyFilter(column: string | null, query: string): Promise<number> {
+  return await invoke("apply_filter", { column, query });
+}

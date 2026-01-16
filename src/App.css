@@ -1,0 +1,170 @@
+:root {
+  --bg-color: #0f172a;
+  --surface-color: #1e293b;
+  --accent-color: #3b82f6;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --border-color: #334155;
+  --table-header-bg: #1e293b;
+  --table-row-hover: #334155;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  overflow: hidden;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.app-header {
+  padding: 1rem 1.5rem;
+  background-color: var(--surface-color);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.app-header h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  background: linear-gradient(to right, #60a5fa, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.file-info {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.primary-btn {
+  background-color: var(--accent-color);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.primary-btn:hover {
+  background-color: #2563eb;
+}
+
+.content-area {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-secondary);
+}
+
+.table-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.table-header-row {
+  display: flex;
+  background-color: var(--table-header-bg);
+  border-bottom: 2px solid var(--border-color);
+  font-weight: 600;
+  z-index: 5;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.table-header-cell {
+  flex: 1;
+  padding: 0.75rem 0.5rem;
+  cursor: pointer;
+  user-select: none;
+  border-right: 1px solid var(--border-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 100px;
+  transition: background-color 0.2s;
+}
+
+.table-header-cell:hover {
+  background-color: var(--table-row-hover);
+  color: white;
+}
+
+.table-header-cell:last-child {
+  border-right: none;
+}
+
+.table-container {
+  flex: 1;
+  overflow: auto;
+  font-size: 0.9rem;
+  /* Hide scrollbar for cleaner look if desired, but functionality first */
+}
+
+.table-row {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.table-row:hover {
+  background-color: var(--table-row-hover);
+}
+
+.table-cell {
+  flex: 1;
+  padding: 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 100px;
+  border-right: 1px solid var(--border-color);
+}
+
+.table-cell:last-child {
+  border-right: none;
+}
+
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  backdrop-filter: blur(4px);
+  font-size: 1.5rem;
+  font-weight: 600;
+}
