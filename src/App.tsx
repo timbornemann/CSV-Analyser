@@ -87,6 +87,7 @@ function App() {
   async function handleClearFilter() {
       if (!filePath) {
           setFilterQuery("");
+          setActiveFilterNode(null);
           return;
       }
 
@@ -173,6 +174,25 @@ function App() {
           setRowCount(total);
           setGroupingInfo({ column, aggregation: agg });
           
+      } catch (err: any) {
+          setError(err.toString());
+      } finally {
+          setLoading(false);
+      }
+  }
+
+  async function handleClearSort() {
+      if (!filePath || !sortCol) {
+          setSortCol(null);
+          setSortDesc(false);
+          return;
+      }
+
+      setLoading(true);
+      try {
+          setSortCol(null);
+          setSortDesc(false);
+          await applySort(null, false);
       } catch (err: any) {
           setError(err.toString());
       } finally {
@@ -267,6 +287,60 @@ function App() {
             {filePath && <span className="file-info">{rowCount.toLocaleString()} rows</span>}
         </div>
       </header>
+
+      {filePath && (
+        <div className="status-strip" role="status" aria-live="polite">
+          {sortCol && (
+            <div className="status-chip">
+              <span>Sort: {sortCol} {sortDesc ? "↓" : "↑"}</span>
+              <button
+                type="button"
+                className="status-chip-clear"
+                onClick={handleClearSort}
+                aria-label="Clear sort"
+                title="Clear sort"
+              >
+                ×
+              </button>
+            </div>
+          )}
+          {(filterQuery.trim().length > 0 || activeFilterNode) && (
+            <div className="status-chip">
+              <span>
+                Filter: {activeFilterNode ? "Advanced filter" : `"${filterQuery}"`}
+              </span>
+              <button
+                type="button"
+                className="status-chip-clear"
+                onClick={handleClearFilter}
+                aria-label="Clear filters"
+                title="Clear filters"
+              >
+                ×
+              </button>
+            </div>
+          )}
+          {groupingInfo && (
+            <div className="status-chip">
+              <span>
+                Grouping: {groupingInfo.column} ({groupingInfo.aggregation})
+              </span>
+              <button
+                type="button"
+                className="status-chip-clear"
+                onClick={handleResetGrouping}
+                aria-label="Reset grouping"
+                title="Reset grouping"
+              >
+                ×
+              </button>
+            </div>
+          )}
+          {!sortCol && !filterQuery.trim() && !activeFilterNode && !groupingInfo && (
+            <span className="status-empty">No active sort, filters, or grouping.</span>
+          )}
+        </div>
+      )}
 
       <main className="content-area">
         {filePath && (
