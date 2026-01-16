@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { open } from '@tauri-apps/plugin-dialog';
 import { loadCsv, getTotalRows, getColumns, applySort, applyFilter, applyAdvancedFilter, applyGroupBy, getCurrentState } from './api';
 import VirtualTable from './components/VirtualTable';
@@ -17,6 +17,9 @@ function App() {
   const [sortDesc, setSortDesc] = useState(false);
   const [filterQuery, setFilterQuery] = useState("");
   const [activeFilterNode, setActiveFilterNode] = useState<FilterNode | null>(null);
+  const [isFiltering, setIsFiltering] = useState(false);
+  const skipNextFilterRef = useRef(false);
+  const filterDebounceMs = 400;
 
   // Check for existing state on mount (persist across reload)
   useEffect(() => {
@@ -47,15 +50,48 @@ function App() {
     setLoading(false);
   }
 
-  async function handleFilter(e: React.ChangeEvent<HTMLInputElement>) {
-    const query = e.target.value;
-    setFilterQuery(query);
-    
-    // Simple filter overrides advanced filter
-    await applyFilter(null, query);
-    
-    const total = await getTotalRows();
-    setRowCount(total);
+  async function runSimpleFilter(query: string) {
+      setLoading(true);
+      setIsFiltering(true);
+      try {
+          await applyFilter(null, query);
+          const total = await getTotalRows();
+          setRowCount(total);
+      } catch (err: any) {
+          setError(err.toString());
+      } finally {
+          setIsFiltering(false);
+          setLoading(false);
+      }
+  }
+
+  function handleFilterChange(e: React.ChangeEvent<HTMLInputElement>) {
+      const query = e.target.value;
+      setFilterQuery(query);
+      setActiveFilterNode(null);
+  }
+
+  async function handleClearFilter() {
+      if (!filePath) {
+          setFilterQuery("");
+          return;
+      }
+
+      skipNextFilterRef.current = true;
+      setFilterQuery("");
+
+      if (activeFilterNode) {
+          setIsFiltering(true);
+          try {
+              await handleAdvancedFilter(null);
+          } finally {
+              setIsFiltering(false);
+          }
+          return;
+      }
+
+      setActiveFilterNode(null);
+      await runSimpleFilter("");
   }
 
   async function handleAdvancedFilter(node: FilterNode | null) {
@@ -85,6 +121,23 @@ function App() {
           setLoading(false);
       }
   }
+
+  useEffect(() => {
+      if (!filePath || activeFilterNode) {
+          return;
+      }
+
+      if (skipNextFilterRef.current) {
+          skipNextFilterRef.current = false;
+          return;
+      }
+
+      const timeout = window.setTimeout(() => {
+          runSimpleFilter(filterQuery);
+      }, filterDebounceMs);
+
+      return () => window.clearTimeout(timeout);
+  }, [filterQuery, filePath, activeFilterNode]);
 
   async function handleGroup(column: string, agg: AggregationType) {
       setLoading(true);
@@ -128,6 +181,7 @@ function App() {
         setSortCol(null);
         setFilterQuery("");
         setActiveFilterNode(null);
+        setIsFiltering(false);
         
         // Load data in backend
         await loadCsv(selected);
@@ -152,14 +206,29 @@ function App() {
       <header className="app-header">
         <h1>CSV High Performance Analyzer</h1>
         <div className="controls">
-            <input 
-                type="text" 
-                placeholder="Quick Filter..." 
-                className="filter-input"
-                value={filterQuery}
-                onChange={handleFilter}
-                disabled={!filePath}
-            />
+            <div className="filter-control">
+                <div className="filter-input-wrapper">
+                    <input 
+                        type="text" 
+                        placeholder="Quick Filter..." 
+                        className="filter-input"
+                        value={filterQuery}
+                        onChange={handleFilterChange}
+                        disabled={!filePath}
+                    />
+                    {filterQuery.length > 0 && (
+                        <button
+                            type="button"
+                            className="clear-filter-btn"
+                            onClick={handleClearFilter}
+                            aria-label="Clear filter"
+                        >
+                            ×
+                        </button>
+                    )}
+                </div>
+                {isFiltering && <span className="filter-status">Filtering…</span>}
+            </div>
             <button onClick={handleOpenFile} className="primary-btn">
                 {filePath ? 'Change File' : 'Open CSV'}
             </button>

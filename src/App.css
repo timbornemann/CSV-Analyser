@@ -56,6 +56,54 @@ body {
   gap: 1rem;
 }
 
+.filter-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.filter-input {
+  background-color: #0b1324;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 0.45rem 2rem 0.45rem 0.75rem;
+  border-radius: 6px;
+  min-width: 220px;
+}
+
+.filter-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.clear-filter-btn {
+  position: absolute;
+  right: 0.35rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.1rem 0.3rem;
+}
+
+.clear-filter-btn:hover {
+  color: var(--text-primary);
+}
+
+.filter-status {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
 .file-info {
   color: var(--text-secondary);
   font-size: 0.9rem;
