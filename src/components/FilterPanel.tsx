@@ -153,6 +153,34 @@ export default function FilterPanel({ columns, activeFilterNode, onApply }: Filt
         setItems([...items, createItem('AND')]);
     };
 
+    const addOrGroup = () => {
+        if (items.length === 0) {
+            setItems([createItem('AND')]);
+            return;
+        }
+        setItems([...items, createItem('OR')]);
+    };
+
+    const groupedItems = items.reduce<{ item: LinearFilterItem; index: number }[][]>((groups, item, index) => {
+        if (index === 0 || item.logic === 'OR') {
+            groups.push([]);
+        }
+        groups[groups.length - 1].push({ item, index });
+        return groups;
+    }, []);
+
+    const tokenLabel = (index: number) => {
+        const letter = String.fromCharCode(65 + (index % 26));
+        const suffix = index >= 26 ? `${Math.floor(index / 26)}` : '';
+        return `${letter}${suffix}`;
+    };
+
+    const filterSummary = groupedItems.length
+        ? groupedItems
+              .map(group => `(${group.map(({ index }) => tokenLabel(index)).join(' AND ')})`)
+              .join(' OR ')
+        : 'No filters yet';
+
     return (
         <div className="filter-panel">
             <div className="filter-list">
@@ -173,59 +201,73 @@ export default function FilterPanel({ columns, activeFilterNode, onApply }: Filt
                         Sort columns A–Z
                     </label>
                 </div>
-                {items.map((item, index) => (
-                    <div key={item.id} className="linear-filter-row">
-                        <div className="row-logic">
-                            {index === 0 ? (
-                                <span className="logic-static">Where</span>
-                            ) : (
-                                <select 
-                                    className={`logic-select ${item.logic === 'AND' ? 'logic-and' : 'logic-or'}`}
-                                    value={item.logic}
-                                    onChange={(e) => updateItem(index, { logic: e.target.value as 'AND' | 'OR' })}
-                                >
-                                    <option value="AND">AND</option>
-                                    <option value="OR">OR</option>
-                                </select>
-                            )}
+                <div className="filter-summary">
+                    <span className="summary-label">Summary</span>
+                    <span className="summary-text">{filterSummary}</span>
+                </div>
+                {groupedItems.map((group, groupIndex) => (
+                    <div key={group[0].item.id} className="or-group">
+                        <div className="or-group-header">
+                            <span className="or-group-title">OR Group {groupIndex + 1}</span>
                         </div>
+                        <div className="or-group-body">
+                            {group.map(({ item, index }) => (
+                                <div key={item.id} className="linear-filter-row">
+                                    <div className="row-logic">
+                                        <span className="filter-token">{tokenLabel(index)}</span>
+                                        {index === 0 ? (
+                                            <span className="logic-static">Where</span>
+                                        ) : (
+                                            <select
+                                                className={`logic-select ${item.logic === 'AND' ? 'logic-and' : 'logic-or'}`}
+                                                value={item.logic}
+                                                onChange={(e) => updateItem(index, { logic: e.target.value as 'AND' | 'OR' })}
+                                            >
+                                                <option value="AND">AND</option>
+                                                <option value="OR">OR</option>
+                                            </select>
+                                        )}
+                                    </div>
 
-                        <div className="row-inputs">
-                            <div className="input-group">
-                                <select 
-                                    value={item.column} 
-                                    onChange={(e) => updateItem(index, { column: e.target.value })}
-                                    className="col-select"
-                                >
-                                    {item.column && !filteredColumns.includes(item.column) && (
-                                        <option value={item.column}>{item.column}</option>
-                                    )}
-                                    {filteredColumns.map(c => <option key={c} value={c}>{c}</option>)}
-                                </select>
-                                <button onClick={() => removeItem(index)} className="icon-btn remove-btn">×</button>
-                            </div>
+                                    <div className="row-inputs">
+                                        <div className="input-group">
+                                            <select
+                                                value={item.column}
+                                                onChange={(e) => updateItem(index, { column: e.target.value })}
+                                                className="col-select"
+                                            >
+                                                {item.column && !filteredColumns.includes(item.column) && (
+                                                    <option value={item.column}>{item.column}</option>
+                                                )}
+                                                {filteredColumns.map(c => <option key={c} value={c}>{c}</option>)}
+                                            </select>
+                                            <button onClick={() => removeItem(index)} className="icon-btn remove-btn">×</button>
+                                        </div>
 
-                            <div className="input-group">
-                                <select 
-                                    value={item.operator} 
-                                    onChange={(e) => updateItem(index, { operator: e.target.value as FilterOperator })}
-                                    className="op-select"
-                                >
-                                    {Object.values(FilterOperator).map(op => (
-                                        <option key={op} value={op}>{op}</option>
-                                    ))}
-                                </select>
-                            </div>
+                                        <div className="input-group">
+                                            <select
+                                                value={item.operator}
+                                                onChange={(e) => updateItem(index, { operator: e.target.value as FilterOperator })}
+                                                className="op-select"
+                                            >
+                                                {Object.values(FilterOperator).map(op => (
+                                                    <option key={op} value={op}>{op}</option>
+                                                ))}
+                                            </select>
+                                        </div>
 
-                            <div className="input-group">
-                                <input 
-                                    type="text" 
-                                    value={item.value} 
-                                    onChange={(e) => updateItem(index, { value: e.target.value })}
-                                    placeholder="Value"
-                                    className="val-input"
-                                />
-                            </div>
+                                        <div className="input-group">
+                                            <input
+                                                type="text"
+                                                value={item.value}
+                                                onChange={(e) => updateItem(index, { value: e.target.value })}
+                                                placeholder="Value"
+                                                className="val-input"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 ))}
@@ -233,6 +275,7 @@ export default function FilterPanel({ columns, activeFilterNode, onApply }: Filt
 
             <div className="filter-actions-bar">
                  <button onClick={addItem} className="add-btn">+ Add Condition</button>
+                 <button onClick={addOrGroup} className="add-btn secondary-add-btn">+ Add OR Group</button>
             </div>
             
             <div className="filter-footer">
