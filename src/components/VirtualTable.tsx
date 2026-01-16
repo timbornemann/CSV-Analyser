@@ -19,9 +19,14 @@ export default function VirtualTable({
   sortDescending,
 }: VirtualTableProps) {
   const parentRef = useRef<HTMLDivElement>(null);
+  const headerScrollRef = useRef<HTMLDivElement>(null);
   const [data, setData] = useState<Record<number, DataRow>>({});
   const fetchingRef = useRef<Set<string>>(new Set());
   const [dataVersion, setDataVersion] = useState(0); // Force re-render trigger
+  const columnMinWidth = 140;
+  const indexColumnWidth = 64;
+  const gridTemplateColumns = `${indexColumnWidth}px repeat(${columns.length}, minmax(${columnMinWidth}px, 1fr))`;
+  const minTableWidth = `${indexColumnWidth + columns.length * columnMinWidth}px`;
 
   // Reset data cache when row count changes (filter applied)
   useEffect(() => {
@@ -91,26 +96,38 @@ export default function VirtualTable({
 
   }, [items, totalRows]); // dataVersion triggers re-render but shouldn't re-trigger effect
 
+  const handleScroll = () => {
+    if (parentRef.current && headerScrollRef.current) {
+      headerScrollRef.current.scrollLeft = parentRef.current.scrollLeft;
+    }
+  };
+
   return (
     <div className="table-wrapper">
-      <div className="table-header-row">
-        {columns.map(col => {
-          const isActive = sortColumn === col;
-          const sortIcon = isActive ? (sortDescending ? "↓" : "↑") : "";
+      <div className="table-header-scroll" ref={headerScrollRef}>
+        <div
+          className="table-header-row"
+          style={{ gridTemplateColumns, minWidth: minTableWidth }}
+        >
+          <div className="table-header-cell table-index-cell">#</div>
+          {columns.map(col => {
+            const isActive = sortColumn === col;
+            const sortIcon = isActive ? (sortDescending ? "↓" : "↑") : "";
 
-          return (
-            <div
-              key={col}
-              className={`table-header-cell${isActive ? " active" : ""}`}
-              onClick={() => onSort(col)}
-            >
-              <span className="header-label">{col}</span>
-              {sortIcon && <span className="sort-indicator">{sortIcon}</span>}
-            </div>
-          );
-        })}
+            return (
+              <div
+                key={col}
+                className={`table-header-cell${isActive ? " active" : ""}`}
+                onClick={() => onSort(col)}
+              >
+                <span className="header-label">{col}</span>
+                {sortIcon && <span className="sort-indicator">{sortIcon}</span>}
+              </div>
+            );
+          })}
+        </div>
       </div>
-      <div className="table-container" ref={parentRef}>
+      <div className="table-container" ref={parentRef} onScroll={handleScroll}>
 
       <div
         style={{
@@ -129,19 +146,32 @@ export default function VirtualTable({
                 position: 'absolute',
                 top: 0,
                 left: 0,
-                width: '100%',
+                width: 'max-content',
                 height: `${virtualRow.size}px`,
                 transform: `translateY(${virtualRow.start}px)`,
+                gridTemplateColumns,
+                minWidth: minTableWidth,
               }}
             >
               {rowData ? (
-                columns.map((col) => (
-                  <div key={col} className="table-cell" title={String(rowData[col])}>
-                    {rowData[col]}
-                  </div>
-                ))
+                <>
+                  <div className="table-cell table-index-cell">{virtualRow.index + 1}</div>
+                  {columns.map((col) => (
+                    <div key={col} className="table-cell" title={String(rowData[col])}>
+                      {rowData[col]}
+                    </div>
+                  ))}
+                </>
               ) : (
-                <div className="table-row-loading">Loading...</div>
+                <>
+                  <div className="table-cell table-index-cell">{virtualRow.index + 1}</div>
+                  <div
+                    className="table-row-loading"
+                    style={{ gridColumn: `span ${columns.length}` }}
+                  >
+                    Loading...
+                  </div>
+                </>
               )}
             </div>
           );
