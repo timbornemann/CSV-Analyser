@@ -1,0 +1,85 @@
+    Checking tauri-app v0.1.0 (C:\Users\timbo\Documents\Projects\CSV-Analyser\src-tauri)
+warning: unused import: `regex::Regex`
+ --> src\commands.rs:6:5
+  |
+6 | use regex::Regex;
+  |     ^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+error[E0507]: cannot move out of `*ca_str` which is behind a shared reference
+   --> src\commands.rs:245:34
+    |
+245 |                       let ca_s = ca_str.into_column();
+    |                                  ^^^^^^ ------------- `*ca_str` moved due to this method call
+    |                                  |
+    |                                  move occurs because `*ca_str` has type `ChunkedArray<StringType>`, which does not implement the `Copy` trait
+    |
+note: `into_column` takes ownership of the receiver `self`, which moves `*ca_str`
+   --> C:\Users\timbo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\polars-core-0.45.1\src\frame\column\mod.rs:49:20
+    |
+ 49 |     fn into_column(self) -> Column;
+    |                    ^^^^
+help: you can `clone` the value and consume it, but this might not be your desired behavior
+    |
+245 |                       let ca_s = <ChunkedArray<StringType> as Clone>::clone(&ca_str).into_column();
+    |                                  ++++++++++++++++++++++++++++++++++++++++++++      +
+help: consider cloning the value if the performance cost is acceptable
+    |
+245 |                       let ca_s = ca_str.clone().into_column();
+    |                                        ++++++++
+
+error[E0507]: cannot move out of `*ca_str` which is behind a shared reference
+   --> src\commands.rs:250:34
+    |
+250 |                       let ca_s = ca_str.into_column();
+    |                                  ^^^^^^ ------------- `*ca_str` moved due to this method call
+    |                                  |
+    |                                  move occurs because `*ca_str` has type `ChunkedArray<StringType>`, which does not implement the `Copy` trait
+    |
+help: you can `clone` the value and consume it, but this might not be your desired behavior
+    |
+250 |                       let ca_s = <ChunkedArray<StringType> as Clone>::clone(&ca_str).into_column();
+    |                                  ++++++++++++++++++++++++++++++++++++++++++++      +
+help: consider cloning the value if the performance cost is acceptable
+    |
+250 |                       let ca_s = ca_str.clone().into_column();
+    |                                        ++++++++
+
+error[E0507]: cannot move out of `*ca_str` which is behind a shared reference
+   --> src\commands.rs:264:34
+    |
+264 |                       let ca_s = ca_str.into_column();
+    |                                  ^^^^^^ ------------- `*ca_str` moved due to this method call
+    |                                  |
+    |                                  move occurs because `*ca_str` has type `ChunkedArray<StringType>`, which does not implement the `Copy` trait
+    |
+help: you can `clone` the value and consume it, but this might not be your desired behavior
+    |
+264 |                       let ca_s = <ChunkedArray<StringType> as Clone>::clone(&ca_str).into_column();
+    |                                  ++++++++++++++++++++++++++++++++++++++++++++      +
+help: consider cloning the value if the performance cost is acceptable
+    |
+264 |                       let ca_s = ca_str.clone().into_column();
+    |                                        ++++++++
+
+error[E0507]: cannot move out of `*ca_str` which is behind a shared reference
+   --> src\commands.rs:275:34
+    |
+275 |                       let ca_s = ca_str.into_column();
+    |                                  ^^^^^^ ------------- `*ca_str` moved due to this method call
+    |                                  |
+    |                                  move occurs because `*ca_str` has type `ChunkedArray<StringType>`, which does not implement the `Copy` trait
+    |
+help: you can `clone` the value and consume it, but this might not be your desired behavior
+    |
+275 |                       let ca_s = <ChunkedArray<StringType> as Clone>::clone(&ca_str).into_column();
+    |                                  ++++++++++++++++++++++++++++++++++++++++++++      +
+help: consider cloning the value if the performance cost is acceptable
+    |
+275 |                       let ca_s = ca_str.clone().into_column();
+    |                                        ++++++++
+
+For more information about this error, try `rustc --explain E0507`.
+warning: `tauri-app` (lib) generated 1 warning
+error: could not compile `tauri-app` (lib) due to 4 previous errors; 1 warning emitted

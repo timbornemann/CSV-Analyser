@@ -4705,6 +4705,7 @@ name = "tauri-app"
 version = "0.1.0"
 dependencies = [
  "polars",
+ "regex",
  "serde",
  "serde_json",
  "tauri",

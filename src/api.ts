@@ -28,3 +28,17 @@ export async function applySort(column: string, descending: boolean): Promise<nu
 export async function applyFilter(column: string | null, query: string): Promise<number> {
   return await invoke("apply_filter", { column, query });
 }
+
+export async function applyAdvancedFilter(filterTree: any): Promise<number> {
+    // filterTree matches FilterNodeStruct
+    return await invoke("apply_advanced_filter", { filterTree });
+}
+
+export async function applyGroupBy(column: string, agg: string): Promise<string> {
+    return await invoke("apply_group_by", { column, agg });
+}
+
+export async function getCurrentState(): Promise<import("./types").AppStateInfo> {
+    return await invoke("get_current_state");
+}
+

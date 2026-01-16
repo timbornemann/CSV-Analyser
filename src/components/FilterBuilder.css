@@ -1,0 +1,148 @@
+.filter-builder-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.filter-builder-modal {
+    background: var(--bg-secondary, #1e1e1e);
+    width: 800px;
+    height: 80vh;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--border-color, #333);
+}
+
+.filter-builder-modal header {
+    padding: 20px;
+    border-bottom: 1px solid #333;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.filter-builder-modal header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.filter-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.filter-group {
+    border-left: 2px solid #555;
+    padding-left: 15px;
+    margin-bottom: 10px;
+}
+
+.root-group {
+    border-left: none;
+    padding-left: 0;
+}
+
+.group-header {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 8px;
+    border-radius: 6px;
+}
+
+.group-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.group-children {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.filter-condition {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+}
+
+.logic-select {
+    font-weight: bold;
+    background: #333;
+    color: white;
+    border: 1px solid #555;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.column-select,
+.operator-select {
+    background: #2a2a2a;
+    color: white;
+    border: 1px solid #444;
+    padding: 6px;
+    border-radius: 4px;
+}
+
+input[type="text"] {
+    background: #2a2a2a;
+    border: 1px solid #444;
+    color: white;
+    padding: 6px;
+    border-radius: 4px;
+    flex: 1;
+}
+
+button {
+    cursor: pointer;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+}
+
+.primary-btn {
+    background: #007acc;
+    color: white;
+}
+
+.secondary-btn {
+    background: #444;
+    color: white;
+}
+
+.remove-btn {
+    background: #cc3300;
+    color: white;
+    padding: 4px 8px;
+    font-size: 0.8rem;
+}
+
+.close-btn {
+    background: transparent;
+    font-size: 1.5rem;
+    color: #999;
+}
+
+footer {
+    padding: 20px;
+    border-top: 1px solid #333;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}

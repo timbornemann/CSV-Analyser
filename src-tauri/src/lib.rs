@@ -15,7 +15,10 @@ pub fn run() {
             get_columns,
             get_total_rows,
             apply_sort,
-            apply_filter
+            apply_filter,
+            apply_advanced_filter,
+            apply_group_by,
+            get_current_state
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

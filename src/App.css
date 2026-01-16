@@ -75,7 +75,8 @@ body {
   position: relative;
   overflow: hidden;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  /* Changed to row for Sidebar */
 }
 
 .empty-state {

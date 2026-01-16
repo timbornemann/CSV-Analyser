@@ -1,0 +1,66 @@
+    Checking tauri-app v0.1.0 (C:\Users\timbo\Documents\Projects\CSV-Analyser\src-tauri)
+warning: unused import: `regex::Regex`
+ --> src\commands.rs:6:5
+  |
+6 | use regex::Regex;
+  |     ^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+error[E0308]: mismatched types
+   --> src\commands.rs:259:48
+    |
+259 | ...                   return s_num.gt(&val_s).map_err(|e: PolarsError| e.to_string());
+    |                                    -- ^^^^^^ expected `&Column`, found `&Series`
+    |                                    |
+    |                                    arguments to this method are incorrect
+    |
+    = note: expected reference `&polars::prelude::Column`
+               found reference `&polars::prelude::Series`
+help: the return type of this call is `&polars::prelude::Series` due to the type of the argument passed
+   --> src\commands.rs:259:39
+    |
+259 | ...                   return s_num.gt(&val_s).map_err(|e: PolarsError| e.to_string());
+    |                              ^^^^^^^^^------^
+    |                                       |
+    |                                       this argument influences the return type of `gt`
+note: method defined here
+   --> C:\Users\timbo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\polars-core-0.45.1\src\chunked_array\ops\mod.rs:347:8
+    |
+347 |     fn gt(&self, rhs: Rhs) -> Self::Item;
+    |        ^^
+
+error[E0308]: mismatched types
+   --> src\commands.rs:271:48
+    |
+271 | ...                   return s_num.lt(&val_s).map_err(|e: PolarsError| e.to_string());
+    |                                    -- ^^^^^^ expected `&Column`, found `&Series`
+    |                                    |
+    |                                    arguments to this method are incorrect
+    |
+    = note: expected reference `&polars::prelude::Column`
+               found reference `&polars::prelude::Series`
+help: the return type of this call is `&polars::prelude::Series` due to the type of the argument passed
+   --> src\commands.rs:271:39
+    |
+271 | ...                   return s_num.lt(&val_s).map_err(|e: PolarsError| e.to_string());
+    |                              ^^^^^^^^^------^
+    |                                       |
+    |                                       this argument influences the return type of `lt`
+note: method defined here
+   --> C:\Users\timbo\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\polars-core-0.45.1\src\chunked_array\ops\mod.rs:353:8
+    |
+353 |     fn lt(&self, rhs: Rhs) -> Self::Item;
+    |        ^^
+
+warning: unused variable: `agg`
+   --> src\commands.rs:299:67
+    |
+299 | pub fn apply_group_by(state: State<'_, AppState>, column: String, agg: AggregationType) -> Result<String, String> {
+    |                                                                   ^^^ help: if this is intentional, prefix it with an underscore: `_agg`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+For more information about this error, try `rustc --explain E0308`.
+warning: `tauri-app` (lib) generated 2 warnings
+error: could not compile `tauri-app` (lib) due to 2 previous errors; 2 warnings emitted
