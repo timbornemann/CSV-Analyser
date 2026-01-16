@@ -21,7 +21,7 @@ export async function getRows(offset: number, limit: number): Promise<DataRow[]>
   return JSON.parse(json);
 }
 
-export async function applySort(column: string, descending: boolean): Promise<number> {
+export async function applySort(column: string | null, descending: boolean): Promise<number> {
   return await invoke("apply_sort", { column, descending });
 }
 

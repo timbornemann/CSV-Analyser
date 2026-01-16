@@ -7,9 +7,17 @@ interface VirtualTableProps {
   columns: string[];
   totalRows: number;
   onSort: (column: string) => void;
+  sortColumn: string | null;
+  sortDescending: boolean;
 }
 
-export default function VirtualTable({ columns, totalRows, onSort }: VirtualTableProps) {
+export default function VirtualTable({
+  columns,
+  totalRows,
+  onSort,
+  sortColumn,
+  sortDescending,
+}: VirtualTableProps) {
   const parentRef = useRef<HTMLDivElement>(null);
   const [data, setData] = useState<Record<number, DataRow>>({});
   const fetchingRef = useRef<Set<string>>(new Set());
@@ -86,11 +94,21 @@ export default function VirtualTable({ columns, totalRows, onSort }: VirtualTabl
   return (
     <div className="table-wrapper">
       <div className="table-header-row">
-        {columns.map(col => (
-            <div key={col} className="table-header-cell" onClick={() => onSort(col)}>
-                {col} ↕
+        {columns.map(col => {
+          const isActive = sortColumn === col;
+          const sortIcon = isActive ? (sortDescending ? "↓" : "↑") : "";
+
+          return (
+            <div
+              key={col}
+              className={`table-header-cell${isActive ? " active" : ""}`}
+              onClick={() => onSort(col)}
+            >
+              <span className="header-label">{col}</span>
+              {sortIcon && <span className="sort-indicator">{sortIcon}</span>}
             </div>
-        ))}
+          );
+        })}
       </div>
       <div className="table-container" ref={parentRef}>
 

@@ -43,12 +43,22 @@ function App() {
   }, []);
 
   async function handleSort(column: string) {
-    const newDesc = sortCol === column ? !sortDesc : false;
-    setSortCol(column);
-    setSortDesc(newDesc);
-    
+    let nextSortCol: string | null = column;
+    let nextSortDesc = false;
+
+    if (sortCol === column) {
+      if (!sortDesc) {
+        nextSortDesc = true;
+      } else {
+        nextSortCol = null;
+      }
+    }
+
+    setSortCol(nextSortCol);
+    setSortDesc(nextSortDesc);
+
     setLoading(true);
-    await applySort(column, newDesc);
+    await applySort(nextSortCol, nextSortDesc);
     setLoading(false);
   }
 
@@ -276,7 +286,13 @@ function App() {
             {error && <div className="error-banner">{error}</div>}
 
             {!loading && !error && rowCount > 0 && (
-                <VirtualTable columns={columns} totalRows={rowCount} onSort={handleSort} />
+                <VirtualTable
+                    columns={columns}
+                    totalRows={rowCount}
+                    onSort={handleSort}
+                    sortColumn={sortCol}
+                    sortDescending={sortDesc}
+                />
             )}
 
             {!loading && !filePath && (
