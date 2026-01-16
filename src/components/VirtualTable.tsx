@@ -12,10 +12,14 @@ interface VirtualTableProps {
 export default function VirtualTable({ columns, totalRows, onSort }: VirtualTableProps) {
   const parentRef = useRef<HTMLDivElement>(null);
   const [data, setData] = useState<Record<number, DataRow>>({});
+  const fetchingRef = useRef<Set<string>>(new Set());
+  const [dataVersion, setDataVersion] = useState(0); // Force re-render trigger
 
   // Reset data cache when row count changes (filter applied)
   useEffect(() => {
     setData({});
+    fetchingRef.current.clear();
+    setDataVersion(0);
   }, [totalRows]);
 
   const virtualizer = useVirtualizer({
@@ -28,6 +32,7 @@ export default function VirtualTable({ columns, totalRows, onSort }: VirtualTabl
   const items = virtualizer.getVirtualItems();
 
   useEffect(() => {
+    console.log(`VirtualTable useEffect triggered. items.length=${items.length}, totalRows=${totalRows}, dataVersion=${dataVersion}`);
     if (items.length === 0) return;
 
     const firstItem = items[0];
@@ -36,6 +41,8 @@ export default function VirtualTable({ columns, totalRows, onSort }: VirtualTabl
     const start = firstItem.index;
     const end = lastItem.index;
     const limit = end - start + 1;
+    
+    const fetchKey = `${start}-${end}`;
     
     // Check if we need to fetch
     let needsFetch = false;
@@ -46,19 +53,35 @@ export default function VirtualTable({ columns, totalRows, onSort }: VirtualTabl
         }
     }
 
-    if (needsFetch) {
+    if (needsFetch && !fetchingRef.current.has(fetchKey)) {
+        fetchingRef.current.add(fetchKey);
+        console.log(`VirtualTable: Fetching rows ${start} to ${end} (limit ${limit})`);
         getRows(start, limit).then(rows => {
+            console.log(`VirtualTable: Received ${rows.length} rows for request ${start}-${end}`);
+            fetchingRef.current.delete(fetchKey);
+            
+            if (rows.length === 0) {
+                 console.warn("VirtualTable: Received 0 rows! Stopping fetch loop for this range.");
+                 return; 
+            }
             setData(prev => {
                 const newData = { ...prev };
                 rows.forEach((row, i) => {
                     newData[start + i] = row;
                 });
+                console.log(`VirtualTable: Data state updated. Total cached rows: ${Object.keys(newData).length}`);
                 return newData;
             });
-        }).catch(console.error);
+            // Increment version to force re-render
+            console.log(`VirtualTable: Incrementing dataVersion to trigger re-render`);
+            setDataVersion(v => v + 1);
+        }).catch(err => {
+            console.error("VirtualTable: Fetch error:", err);
+            fetchingRef.current.delete(fetchKey);
+        });
     }
 
-  }, [items, data, totalRows]); // Depend on totalRows to re-fetch after sort/filter
+  }, [items, totalRows]); // dataVersion triggers re-render but shouldn't re-trigger effect
 
   return (
     <div className="table-wrapper">

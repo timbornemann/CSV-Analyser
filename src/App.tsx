@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { open } from '@tauri-apps/plugin-dialog';
 import { loadCsv, getTotalRows, getColumns, applySort, applyFilter, applyAdvancedFilter, applyGroupBy, getCurrentState } from './api';
 import VirtualTable from './components/VirtualTable';
-import FilterBuilder from './components/FilterBuilder';
 import Sidebar from './components/Sidebar';
 import { FilterNode, AggregationType } from './types';
 import './App.css';
@@ -17,8 +16,7 @@ function App() {
   const [sortCol, setSortCol] = useState<string | null>(null);
   const [sortDesc, setSortDesc] = useState(false);
   const [filterQuery, setFilterQuery] = useState("");
-  
-  const [showFilterBuilder, setShowFilterBuilder] = useState(false);
+  const [activeFilterNode, setActiveFilterNode] = useState<FilterNode | null>(null);
 
   // Check for existing state on mount (persist across reload)
   useEffect(() => {
@@ -60,18 +58,30 @@ function App() {
     setRowCount(total);
   }
 
-  async function handleAdvancedFilter(node: FilterNode) {
+  async function handleAdvancedFilter(node: FilterNode | null) {
+      console.log("handleAdvancedFilter called with:", node);
       setLoading(true);
+      setActiveFilterNode(node);
       try {
-          // Clear simple filter input visually
-          setFilterQuery(""); 
-          
-          await applyAdvancedFilter(node);
+          if (!node) {
+              console.log("Clearing filter...");
+              setFilterQuery(""); 
+              await applyFilter(null, "");
+          } else {
+            console.log("Applying advanced filter...");
+            // Clear simple filter input visually
+            setFilterQuery(""); 
+            await applyAdvancedFilter(node);
+          }
+          console.log("Filter applied, fetching total rows...");
           const total = await getTotalRows();
+          console.log("Total rows:", total);
           setRowCount(total);
       } catch (err: any) {
+          console.error("Error in handleAdvancedFilter:", err);
           setError(err.toString());
       } finally {
+          console.log("handleAdvancedFilter finally block");
           setLoading(false);
       }
   }
@@ -117,7 +127,7 @@ function App() {
         // Reset state
         setSortCol(null);
         setFilterQuery("");
-        setShowFilterBuilder(false);
+        setActiveFilterNode(null);
         
         // Load data in backend
         await loadCsv(selected);
@@ -150,13 +160,6 @@ function App() {
                 onChange={handleFilter}
                 disabled={!filePath}
             />
-            <button 
-                onClick={() => setShowFilterBuilder(true)} 
-                className="secondary-btn"
-                disabled={!filePath}
-            >
-                Advanced Filter
-            </button>
             <button onClick={handleOpenFile} className="primary-btn">
                 {filePath ? 'Change File' : 'Open CSV'}
             </button>
@@ -169,6 +172,8 @@ function App() {
             <Sidebar 
                 columns={columns} 
                 onGroup={handleGroup} 
+                activeFilterNode={activeFilterNode}
+                onApplyFilter={handleAdvancedFilter}
             />
         )}
 
@@ -189,14 +194,6 @@ function App() {
             )}
         </div>
       </main>
-
-      {showFilterBuilder && (
-          <FilterBuilder 
-            columns={columns} 
-            onApply={handleAdvancedFilter} 
-            onClose={() => setShowFilterBuilder(false)} 
-          />
-      )}
     </div>
   );
 }

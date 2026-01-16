@@ -77,6 +77,7 @@ pub fn get_total_rows(state: State<'_, AppState>) -> Result<usize, String> {
 
 #[tauri::command]
 pub fn get_rows(state: State<'_, AppState>, offset: usize, limit: usize) -> Result<String, String> {
+    println!("RUST: get_rows offset={} limit={}", offset, limit);
     let binding = state.current_df.lock().map_err(|e| e.to_string())?;
     let df = binding.as_ref().ok_or("No data loaded")?;
     
@@ -92,14 +93,38 @@ pub fn get_rows(state: State<'_, AppState>, offset: usize, limit: usize) -> Resu
     }
     
     let sliced_df = df.slice(offset as i64, safe_limit);
+    println!("RUST: sliced_df height={}", sliced_df.height());
+    println!("RUST: sliced_df shape: height={}, width={}", sliced_df.height(), sliced_df.width());
+    println!("RUST: sliced_df columns: {:?}", sliced_df.get_column_names());
+    
+    // Check if DataFrame is actually empty despite reporting height
+    if sliced_df.height() > 0 && sliced_df.width() > 0 {
+        println!("RUST: DataFrame appears valid, attempting JSON serialization...");
+    } else {
+        println!("RUST: WARNING - DataFrame has height={} width={}", sliced_df.height(), sliced_df.width());
+    }
     
     let mut buf = Vec::new();
     polars::io::json::JsonWriter::new(&mut buf)
         .with_json_format(JsonFormat::Json)
         .finish(&mut sliced_df.clone())
-        .map_err(|e: PolarsError| e.to_string())?;
-        
-    String::from_utf8(buf).map_err(|e| e.to_string())
+        .map_err(|e: PolarsError| {
+            println!("RUST: JSON serialization ERROR: {}", e);
+            e.to_string()
+        })?;
+    
+    let json_string = String::from_utf8(buf).map_err(|e| e.to_string())?;
+    println!("RUST: get_rows returning {} bytes of JSON", json_string.len());
+    
+    // Log first 200 chars to see what we're returning
+    let preview = if json_string.len() > 200 {
+        format!("{}...", &json_string[..200])
+    } else {
+        json_string.clone()
+    };
+    println!("RUST: JSON preview: {}", preview);
+    
+    Ok(json_string)
 }
 
 #[tauri::command]
@@ -107,7 +132,10 @@ pub fn apply_sort(state: State<'_, AppState>, column: String, descending: bool) 
     let mut current_guard = state.current_df.lock().map_err(|e| e.to_string())?;
     
     if let Some(df) = current_guard.as_mut() {
-        let sorted_df = df.sort([&column], SortMultipleOptions::default().with_order_descending(descending))
+        let sorted_df = df.sort([&column], SortMultipleOptions::default()
+            .with_order_descending(descending)
+            .with_nulls_last(true)
+        )
             .map_err(|e: PolarsError| e.to_string())?;
         *df = sorted_df;
         Ok(df.height())
@@ -316,14 +344,25 @@ fn build_filter_mask(df: &DataFrame, node: &FilterNode) -> Result<BooleanChunked
 
 #[tauri::command]
 pub fn apply_advanced_filter(state: State<'_, AppState>, filter_tree: FilterNode) -> Result<usize, String> {
+    println!("RUST: apply_advanced_filter called");
     let original_guard = state.original_df.lock().map_err(|e| e.to_string())?;
     let original_df = original_guard.as_ref().ok_or("No data loaded")?;
     
+    println!("RUST: Original DF locked. Building mask...");
     let mask = build_filter_mask(original_df, &filter_tree)?;
-    let filtered_df = original_df.filter(&mask).map_err(|e| e.to_string())?;
+    println!("RUST: Mask built. Filtering...");
+    
+    let mut filtered_df = original_df.filter(&mask).map_err(|e| e.to_string())?;
+    println!("RUST: Filtered. Height: {}", filtered_df.height());
+    
+    // CRITICAL FIX: Rechunk to consolidate memory and ensure proper serialization
+    // Filtered DataFrames may have fragmented chunks that don't serialize
+    filtered_df.rechunk_mut();
+    println!("RUST: DataFrame rechunked for memory consolidation.");
     
     let height = filtered_df.height();
     *state.current_df.lock().map_err(|e| e.to_string())? = Some(filtered_df);
+    println!("RUST: current_df updated. Done.");
     
     Ok(height)
 }

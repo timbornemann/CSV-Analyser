@@ -1,42 +1,128 @@
 .sidebar {
     width: 250px;
-    background-color: var(--surface-color);
-    border-right: 1px solid var(--border-color);
+    background-color: var(--surface-color, #1e293b);
+    border-right: 1px solid var(--border-color, #334155);
     padding: 1.5rem;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
     z-index: 5;
+    height: 100%;
 }
 
-.sidebar h3 {
-    margin: 0;
-    font-size: 1.1rem;
-    color: var(--text-primary);
-    border-bottom: 2px solid var(--border-color);
+.sidebar-tabs {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 2px solid var(--border-color, #334155);
     padding-bottom: 0.5rem;
 }
 
+.tab-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 0.5rem;
+    cursor: pointer;
+    font-weight: bold;
+    color: var(--text-secondary, #94a3b8);
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary, #f1f5f9);
+}
+
+.tab-btn.active {
+    background: var(--primary-color, #3b82f6);
+    color: white;
+}
+
+.sidebar h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+    color: var(--text-primary, #f1f5f9);
+}
+
+/* Grouping Panel Styles */
 .control-group {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    margin-bottom: 1rem;
 }
 
 .control-group label {
     font-size: 0.9rem;
-    color: var(--text-secondary);
+    color: var(--text-secondary, #94a3b8);
+    font-weight: 500;
 }
 
 .control-group select {
-    background: #0f172a;
-    color: white;
-    border: 1px solid var(--border-color);
-    padding: 0.5rem;
+    background: var(--background-color, #0f172a);
+    color: var(--text-primary, #f1f5f9);
+    border: 1px solid var(--border-color, #334155);
+    padding: 0.75rem;
     border-radius: 6px;
+    outline: none;
+    width: 100%;
+}
+
+.control-group select:focus {
+    border-color: var(--primary-color, #3b82f6);
 }
 
 .full-width {
     width: 100%;
+}
+
+/* Sorting Panel Styles */
+.column-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    overflow-y: auto;
+    flex: 1;
+    /* Custom Scrollbar */
+    padding-right: 4px;
+}
+
+.column-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.column-list::-webkit-scrollbar-thumb {
+    background: var(--border-color, #334155);
+    border-radius: 2px;
+}
+
+.column-item {
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s;
+    color: var(--text-secondary, #94a3b8);
+}
+
+.column-item:hover {
+    background: rgba(255, 255, 255, 0.07);
+    color: var(--text-primary, #f1f5f9);
+}
+
+.column-item.active {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: var(--primary-color, #3b82f6);
+    color: var(--primary-color, #3b82f6);
+}
+
+.sort-indicator {
+    font-weight: bold;
+    font-size: 1.2em;
 }

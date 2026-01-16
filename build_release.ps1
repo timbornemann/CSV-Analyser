@@ -23,6 +23,13 @@ Write-Host "Updated tauri.conf.json to $version" -ForegroundColor Green
 
 # Build the application
 Write-Host "Building Tauri App..." -ForegroundColor Yellow
+
+# Clean previous build artifacts to ensure we only copy the new one
+$nsisDir = "src-tauri/target/release/bundle/nsis"
+if (Test-Path $nsisDir) {
+    Remove-Item "$nsisDir/*.exe" -ErrorAction SilentlyContinue
+}
+
 npm run tauri build
 
 if ($LASTEXITCODE -ne 0) {

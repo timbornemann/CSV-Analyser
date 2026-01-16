@@ -30,8 +30,15 @@ export async function applyFilter(column: string | null, query: string): Promise
 }
 
 export async function applyAdvancedFilter(filterTree: any): Promise<number> {
-    // filterTree matches FilterNodeStruct
-    return await invoke("apply_advanced_filter", { filterTree });
+    console.log("Invoking apply_advanced_filter with:", JSON.stringify(filterTree, null, 2));
+    try {
+        const res = await invoke("apply_advanced_filter", { filterTree });
+        console.log("apply_advanced_filter result:", res);
+        return res as number;
+    } catch (e) {
+        console.error("apply_advanced_filter failed:", e);
+        throw e;
+    }
 }
 
 export async function applyGroupBy(column: string, agg: string): Promise<string> {

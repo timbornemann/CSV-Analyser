@@ -1,14 +1,14 @@
 export enum FilterOperator {
-    Contains = "Contains",
-    NotContains = "NotContains",
-    Equals = "Equals",
-    NotEquals = "NotEquals",
-    StartsWith = "StartsWith",
-    EndsWith = "EndsWith",
-    GreaterThan = "GreaterThan",
-    LessThan = "LessThan",
-    IsNull = "IsNull",
-    IsNotNull = "IsNotNull"
+    Contains = "contains",
+    NotContains = "notContains",
+    Equals = "equals",
+    NotEquals = "notEquals",
+    StartsWith = "startsWith",
+    EndsWith = "endsWith",
+    GreaterThan = "greaterThan",
+    LessThan = "lessThan",
+    IsNull = "isNull",
+    IsNotNull = "isNotNull"
 }
 
 export interface FilterCondition {

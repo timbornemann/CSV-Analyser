@@ -4,6 +4,7 @@ import './FilterBuilder.css';
 
 interface FilterBuilderProps {
     columns: string[];
+    initialNode?: FilterNode | null;
     onApply: (filter: FilterNode) => void;
     onClose: () => void;
 }
@@ -14,8 +15,8 @@ const DEFAULT_CONDITION: FilterCondition = {
     value: ''
 };
 
-export default function FilterBuilder({ columns, onApply, onClose }: FilterBuilderProps) {
-    const [root, setRoot] = useState<FilterNode>({
+export default function FilterBuilder({ columns, initialNode, onApply, onClose }: FilterBuilderProps) {
+    const [root, setRoot] = useState<FilterNode>(initialNode || {
         logic: 'AND',
         conditions: []
     } as FilterGroup);
