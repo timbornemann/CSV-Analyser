@@ -32,8 +32,14 @@ export enum AggregationType {
     Max = "Max"
 }
 
+export interface GroupingInfo {
+    column: string;
+    aggregation: AggregationType;
+}
+
 export interface AppStateInfo {
     filePath: string | null;
     rowCount: number;
     columns: string[];
+    grouping: GroupingInfo | null;
 }

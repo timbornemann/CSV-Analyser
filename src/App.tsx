@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { open } from '@tauri-apps/plugin-dialog';
-import { loadCsv, getTotalRows, getColumns, applySort, applyFilter, applyAdvancedFilter, applyGroupBy, getCurrentState } from './api';
+import { loadCsv, getTotalRows, getColumns, applySort, applyFilter, applyAdvancedFilter, applyGroupBy, resetGrouping, getCurrentState } from './api';
 import VirtualTable from './components/VirtualTable';
 import Sidebar from './components/Sidebar';
-import { FilterNode, AggregationType } from './types';
+import { FilterNode, AggregationType, GroupingInfo } from './types';
 import './App.css';
 
 function App() {
@@ -12,6 +12,7 @@ function App() {
   const [columns, setColumns] = useState<string[]>([]);
   const [loading, setLoading] = useState(true); // Start loading to check state
   const [error, setError] = useState<string | null>(null);
+  const [groupingInfo, setGroupingInfo] = useState<GroupingInfo | null>(null);
 
   const [sortCol, setSortCol] = useState<string | null>(null);
   const [sortDesc, setSortDesc] = useState(false);
@@ -30,6 +31,7 @@ function App() {
                   setFilePath(state.filePath);
                   setRowCount(state.rowCount);
                   setColumns(state.columns);
+                  setGroupingInfo(state.grouping);
               }
           } catch (e) {
               console.error("Failed to restore state:", e);
@@ -57,6 +59,7 @@ function App() {
           await applyFilter(null, query);
           const total = await getTotalRows();
           setRowCount(total);
+          setGroupingInfo(null);
       } catch (err: any) {
           setError(err.toString());
       } finally {
@@ -113,6 +116,7 @@ function App() {
           const total = await getTotalRows();
           console.log("Total rows:", total);
           setRowCount(total);
+          setGroupingInfo(null);
       } catch (err: any) {
           console.error("Error in handleAdvancedFilter:", err);
           setError(err.toString());
@@ -157,7 +161,24 @@ function App() {
           
           setColumns(cols);
           setRowCount(total);
+          setGroupingInfo({ column, aggregation: agg });
           
+      } catch (err: any) {
+          setError(err.toString());
+      } finally {
+          setLoading(false);
+      }
+  }
+
+  async function handleResetGrouping() {
+      setLoading(true);
+      try {
+          await resetGrouping();
+          const total = await getTotalRows();
+          const cols = await getColumns();
+          setRowCount(total);
+          setColumns(cols);
+          setGroupingInfo(null);
       } catch (err: any) {
           setError(err.toString());
       } finally {
@@ -182,6 +203,7 @@ function App() {
         setFilterQuery("");
         setActiveFilterNode(null);
         setIsFiltering(false);
+        setGroupingInfo(null);
         
         // Load data in backend
         await loadCsv(selected);
@@ -241,6 +263,8 @@ function App() {
             <Sidebar 
                 columns={columns} 
                 onGroup={handleGroup} 
+                groupingInfo={groupingInfo}
+                onResetGrouping={handleResetGrouping}
                 activeFilterNode={activeFilterNode}
                 onApplyFilter={handleAdvancedFilter}
             />

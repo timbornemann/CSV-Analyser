@@ -45,7 +45,10 @@ export async function applyGroupBy(column: string, agg: string): Promise<string>
     return await invoke("apply_group_by", { column, agg });
 }
 
+export async function resetGrouping(): Promise<number> {
+    return await invoke("reset_grouping");
+}
+
 export async function getCurrentState(): Promise<import("./types").AppStateInfo> {
     return await invoke("get_current_state");
 }
-

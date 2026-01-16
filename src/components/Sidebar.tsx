@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import FilterPanel from './FilterPanel';
-import { FilterNode, AggregationType } from '../types';
+import { FilterNode, AggregationType, GroupingInfo } from '../types';
 import './Sidebar.css';
 
 interface SidebarProps {
     columns: string[];
     onGroup: (column: string, agg: AggregationType) => void;
+    groupingInfo: GroupingInfo | null;
+    onResetGrouping: () => void;
     activeFilterNode: FilterNode | null;
     onApplyFilter: (node: FilterNode | null) => void;
 }
 
-export default function Sidebar({ columns, onGroup, activeFilterNode, onApplyFilter }: SidebarProps) {
+export default function Sidebar({ columns, onGroup, groupingInfo, onResetGrouping, activeFilterNode, onApplyFilter }: SidebarProps) {
     const [activeTab, setActiveTab] = useState<'grouping' | 'filter'>('grouping');
     const [selectedCol, setSelectedCol] = useState(columns[0] || '');
     const [selectedAgg, setSelectedAgg] = useState<AggregationType>(AggregationType.Count);
@@ -55,6 +57,16 @@ export default function Sidebar({ columns, onGroup, activeFilterNode, onApplyFil
                 {activeTab === 'grouping' ? (
                     <div className="grouping-panel">
                         <h3>Grouping</h3>
+                        {groupingInfo && (
+                            <div className="grouping-status">
+                                <p>
+                                    Aggregated view: <strong>{groupingInfo.column}</strong> · <strong>{groupingInfo.aggregation}</strong>
+                                </p>
+                                <button onClick={onResetGrouping} className="secondary-btn full-width">
+                                    Reset Grouping (Back to Raw Rows)
+                                </button>
+                            </div>
+                        )}
                         <div className="control-group">
                             <label>Group By Column</label>
                             <input
