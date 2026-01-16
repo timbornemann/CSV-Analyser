@@ -18,6 +18,7 @@ pub fn run() {
             apply_filter,
             apply_advanced_filter,
             apply_group_by,
+            reset_grouping,
             get_current_state
         ])
         .run(tauri::generate_context!())

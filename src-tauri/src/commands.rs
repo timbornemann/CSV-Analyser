@@ -1,4 +1,4 @@
-use crate::state::AppState;
+use crate::state::{AppState, GroupingInfo};
 use polars::prelude::*;
 use std::fs::File;
 use tauri::State;
@@ -16,6 +16,7 @@ pub struct AppStateInfo {
     pub file_path: Option<String>,
     pub row_count: usize,
     pub columns: Vec<String>,
+    pub grouping: Option<GroupingInfo>,
 }
 
 #[tauri::command]
@@ -32,6 +33,7 @@ pub async fn load_csv(state: State<'_, AppState>, path: String) -> Result<usize,
     *state.original_df.lock().map_err(|e| e.to_string())? = Some(df.clone());
     *state.current_df.lock().map_err(|e| e.to_string())? = Some(df);
     *state.file_path.lock().map_err(|e| e.to_string())? = Some(path);
+    *state.grouping.lock().map_err(|e| e.to_string())? = None;
     
     Ok(height)
 }
@@ -45,18 +47,21 @@ pub fn get_current_state(state: State<'_, AppState>) -> Result<AppStateInfo, Str
     drop(path_guard); 
 
     let current_guard = state.current_df.lock().map_err(|e| e.to_string())?;
+    let grouping = state.grouping.lock().map_err(|e| e.to_string())?.clone();
     
     if let Some(df) = current_guard.as_ref() {
         Ok(AppStateInfo {
             file_path: path,
             row_count: df.height(),
             columns: df.get_column_names().iter().map(|s| s.to_string()).collect(),
+            grouping,
         })
     } else {
         Ok(AppStateInfo {
             file_path: None,
             row_count: 0,
             columns: Vec::new(),
+            grouping,
         })
     }
 }
@@ -189,6 +194,7 @@ pub fn apply_filter(state: State<'_, AppState>, column: Option<String>, query: S
     
     let height = filtered_df.height();
     *state.current_df.lock().map_err(|e| e.to_string())? = Some(filtered_df);
+    *state.grouping.lock().map_err(|e| e.to_string())? = None;
     
     Ok(height)
 }
@@ -230,7 +236,7 @@ pub enum FilterNode {
 }
 
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "PascalCase")]
 pub enum AggregationType {
     Count,
     Sum,
@@ -362,13 +368,14 @@ pub fn apply_advanced_filter(state: State<'_, AppState>, filter_tree: FilterNode
     
     let height = filtered_df.height();
     *state.current_df.lock().map_err(|e| e.to_string())? = Some(filtered_df);
+    *state.grouping.lock().map_err(|e| e.to_string())? = None;
     println!("RUST: current_df updated. Done.");
     
     Ok(height)
 }
 
 #[tauri::command]
-pub fn apply_group_by(state: State<'_, AppState>, column: String, _agg: AggregationType) -> Result<String, String> {
+pub fn apply_group_by(state: State<'_, AppState>, column: String, agg: AggregationType) -> Result<String, String> {
     let original_guard = state.original_df.lock().map_err(|e| e.to_string())?;
     let df = original_guard.as_ref().ok_or("No data loaded")?;
     
@@ -378,16 +385,44 @@ pub fn apply_group_by(state: State<'_, AppState>, column: String, _agg: Aggregat
     }
 
     let lazy = df.clone().lazy();
-    
+
+    let (aggregation_expr, aggregation_label, sort_column) = match agg {
+        AggregationType::Count => (len().alias("count"), "Count", "count"),
+        AggregationType::Sum => (col(&column).sum().alias("sum"), "Sum", "sum"),
+        AggregationType::Mean => (col(&column).mean().alias("mean"), "Mean", "mean"),
+        AggregationType::Min => (col(&column).min().alias("min"), "Min", "min"),
+        AggregationType::Max => (col(&column).max().alias("max"), "Max", "max"),
+    };
+
     let grouped = lazy.group_by([col(&column)])
-        .agg([len().alias("count")])
+        .agg([aggregation_expr])
         .collect()
         .map_err(|e| e.to_string())?
-        .sort(vec!["count"], SortMultipleOptions::default().with_order_descending(true))
+        .sort(vec![sort_column], SortMultipleOptions::default().with_order_descending(true))
         .map_err(|e| e.to_string())?;
         
     let height = grouped.height();
     *state.current_df.lock().map_err(|e| e.to_string())? = Some(grouped);
+    *state.grouping.lock().map_err(|e| e.to_string())? = Some(GroupingInfo {
+        column: column.clone(),
+        aggregation: aggregation_label.to_string(),
+    });
     
-    Ok(format!("Grouped by {}, found {} groups", column, height))
+    Ok(format!(
+        "Grouped by {} with {}, found {} groups",
+        column, aggregation_label, height
+    ))
+}
+
+#[tauri::command]
+pub fn reset_grouping(state: State<'_, AppState>) -> Result<usize, String> {
+    let original_guard = state.original_df.lock().map_err(|e| e.to_string())?;
+    let original_df = original_guard.as_ref().ok_or("No data loaded")?;
+    let restored = original_df.clone();
+    let height = restored.height();
+
+    *state.current_df.lock().map_err(|e| e.to_string())? = Some(restored);
+    *state.grouping.lock().map_err(|e| e.to_string())? = None;
+
+    Ok(height)
 }
