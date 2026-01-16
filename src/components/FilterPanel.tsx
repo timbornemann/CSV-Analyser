@@ -20,6 +20,16 @@ const DEFAULT_OPERATOR = FilterOperator.Contains;
 
 export default function FilterPanel({ columns, activeFilterNode, onApply }: FilterPanelProps) {
     const [items, setItems] = useState<LinearFilterItem[]>([]);
+    const [columnSearch, setColumnSearch] = useState('');
+    const [sortColumns, setSortColumns] = useState(true);
+
+    const baseColumns = sortColumns
+        ? [...columns].sort((a, b) => a.localeCompare(b))
+        : columns;
+    const normalizedSearch = columnSearch.trim().toLowerCase();
+    const filteredColumns = normalizedSearch
+        ? baseColumns.filter((column) => column.toLowerCase().includes(normalizedSearch))
+        : baseColumns;
 
     // Convert Tree -> Linear on load
     useEffect(() => {
@@ -146,6 +156,23 @@ export default function FilterPanel({ columns, activeFilterNode, onApply }: Filt
     return (
         <div className="filter-panel">
             <div className="filter-list">
+                <div className="filter-column-tools">
+                    <input
+                        type="text"
+                        value={columnSearch}
+                        onChange={(event) => setColumnSearch(event.target.value)}
+                        placeholder="Search columns"
+                        className="column-search-input"
+                    />
+                    <label className="column-sort-toggle">
+                        <input
+                            type="checkbox"
+                            checked={sortColumns}
+                            onChange={(event) => setSortColumns(event.target.checked)}
+                        />
+                        Sort columns A–Z
+                    </label>
+                </div>
                 {items.map((item, index) => (
                     <div key={item.id} className="linear-filter-row">
                         <div className="row-logic">
@@ -170,7 +197,10 @@ export default function FilterPanel({ columns, activeFilterNode, onApply }: Filt
                                     onChange={(e) => updateItem(index, { column: e.target.value })}
                                     className="col-select"
                                 >
-                                    {columns.map(c => <option key={c} value={c}>{c}</option>)}
+                                    {item.column && !filteredColumns.includes(item.column) && (
+                                        <option value={item.column}>{item.column}</option>
+                                    )}
+                                    {filteredColumns.map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
                                 <button onClick={() => removeItem(index)} className="icon-btn remove-btn">×</button>
                             </div>

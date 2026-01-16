@@ -74,6 +74,32 @@
     border-color: var(--primary-color, #3b82f6);
 }
 
+.column-search-input {
+    background: var(--background-color, #0f172a);
+    color: var(--text-primary, #f1f5f9);
+    border: 1px solid var(--border-color, #334155);
+    padding: 0.65rem 0.75rem;
+    border-radius: 6px;
+    outline: none;
+    width: 100%;
+}
+
+.column-search-input:focus {
+    border-color: var(--primary-color, #3b82f6);
+}
+
+.column-sort-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary, #94a3b8);
+}
+
+.column-sort-toggle input {
+    accent-color: var(--primary-color, #3b82f6);
+}
+
 .full-width {
     width: 100%;
 }

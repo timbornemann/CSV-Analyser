@@ -15,6 +15,40 @@
     padding-right: 4px;
 }
 
+.filter-column-tools {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border-color, #334155);
+}
+
+.column-search-input {
+    background: #1e293b;
+    border: 1px solid #475569;
+    color: #e2e8f0;
+    padding: 0.45rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.column-search-input:focus {
+    border-color: #3b82f6;
+    outline: none;
+}
+
+.column-sort-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary, #94a3b8);
+}
+
+.column-sort-toggle input {
+    accent-color: #3b82f6;
+}
+
 .linear-filter-row {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--border-color, #444);

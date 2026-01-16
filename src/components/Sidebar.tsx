@@ -14,6 +14,19 @@ export default function Sidebar({ columns, onGroup, activeFilterNode, onApplyFil
     const [activeTab, setActiveTab] = useState<'grouping' | 'filter'>('grouping');
     const [selectedCol, setSelectedCol] = useState(columns[0] || '');
     const [selectedAgg, setSelectedAgg] = useState<AggregationType>(AggregationType.Count);
+    const [groupSearch, setGroupSearch] = useState('');
+    const [sortColumns, setSortColumns] = useState(true);
+
+    const baseColumns = sortColumns
+        ? [...columns].sort((a, b) => a.localeCompare(b))
+        : columns;
+    const normalizedGroupSearch = groupSearch.trim().toLowerCase();
+    const filteredColumns = normalizedGroupSearch
+        ? baseColumns.filter((column) => column.toLowerCase().includes(normalizedGroupSearch))
+        : baseColumns;
+    const groupColumnOptions = selectedCol && !filteredColumns.includes(selectedCol)
+        ? [selectedCol, ...filteredColumns]
+        : filteredColumns;
 
     const handleApplyGroup = () => {
         if (selectedCol) {
@@ -44,12 +57,27 @@ export default function Sidebar({ columns, onGroup, activeFilterNode, onApplyFil
                         <h3>Grouping</h3>
                         <div className="control-group">
                             <label>Group By Column</label>
+                            <input
+                                type="text"
+                                value={groupSearch}
+                                onChange={(event) => setGroupSearch(event.target.value)}
+                                placeholder="Search columns"
+                                className="column-search-input"
+                            />
+                            <label className="column-sort-toggle">
+                                <input
+                                    type="checkbox"
+                                    checked={sortColumns}
+                                    onChange={(event) => setSortColumns(event.target.checked)}
+                                />
+                                Sort columns A–Z
+                            </label>
                             <select 
                                 value={selectedCol} 
                                 onChange={(e) => setSelectedCol(e.target.value)}
                             >
                                 <option value="">Select Column...</option>
-                                {columns.map(c => <option key={c} value={c}>{c}</option>)}
+                                {groupColumnOptions.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
                         </div>
 
