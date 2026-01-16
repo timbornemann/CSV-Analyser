@@ -1,43 +1,44 @@
-name: Release
+name: Upload Release
 on:
   push:
-    tags:
-      - 'v*'
+    paths:
+      - 'releases/**'
   workflow_dispatch:
 
 jobs:
-  release:
+  upload-release:
+    runs-on: ubuntu-latest
     permissions:
       contents: write
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: [windows-latest]
-
-    runs-on: ${{ matrix.platform }}
-
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Detect Release Version
+        id: detect_version
+        run: |
+          # Find the latest added folder in releases/ (assuming simple glob or user commit)
+          # We look at the latest commit's changed files
+          # Simple approach: find directories in releases/ and pick the one matching package.json version or just the changed one.
+          # Better: The script commits 'releases/vX.Y.Z'. We assume the pushed tag or just parse the path.
+          
+          # Since this triggers on push, we can look for the folder.
+          # Let's find the version from package.json just to be sure, or rely on the folder structure.
+          VERSION=$(jq -r .version package.json)
+          TAG="v$VERSION"
+          echo "Processing Release $TAG"
+          echo "version=$TAG" >> $GITHUB_OUTPUT
+          echo "release_dir=releases/$TAG" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
         with:
-          node-version: 20
-
-      - name: Install Rust stable
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Install frontend dependencies
-        run: npm install
-
-      - name: Build the app
-        uses: tauri-apps/tauri-action@v0
+          tag_name: ${{ steps.detect_version.outputs.version }}
+          name: CSV Analyzer ${{ steps.detect_version.outputs.version }}
+          body_path: ${{ steps.detect_version.outputs.release_dir }}/notes.md
+          files: |
+            ${{ steps.detect_version.outputs.release_dir }}/*.exe
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tagName: ${{ github.ref_name }}
-          releaseName: 'CSV Analyzer ${{ github.ref_name }}'
-          releaseBody: 'See the assets to download this version and install.'
-          releaseDraft: true
-          prerelease: false
