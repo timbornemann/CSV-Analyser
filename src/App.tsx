@@ -19,8 +19,12 @@ function App() {
   const [filterQuery, setFilterQuery] = useState("");
   const [activeFilterNode, setActiveFilterNode] = useState<FilterNode | null>(null);
   const [isFiltering, setIsFiltering] = useState(false);
+  const [selectedFilterMode, setSelectedFilterMode] = useState<'quick' | 'advanced'>('quick');
+  const [filterNotice, setFilterNotice] = useState<string | null>(null);
   const skipNextFilterRef = useRef(false);
   const filterDebounceMs = 400;
+  const activeFilterMode = activeFilterNode ? 'advanced' : (filterQuery.trim().length > 0 ? 'quick' : 'none');
+  const isQuickFilterOverridden = activeFilterMode === 'advanced';
 
   // Check for existing state on mount (persist across reload)
   useEffect(() => {
@@ -80,19 +84,26 @@ function App() {
 
   function handleFilterChange(e: React.ChangeEvent<HTMLInputElement>) {
       const query = e.target.value;
+      if (activeFilterNode) {
+          setFilterNotice("Advanced-Filter wurde deaktiviert, weil der Quick Filter geändert wurde.");
+      }
       setFilterQuery(query);
       setActiveFilterNode(null);
+      setSelectedFilterMode('quick');
   }
 
   async function handleClearFilter() {
       if (!filePath) {
           setFilterQuery("");
           setActiveFilterNode(null);
+          setFilterNotice(null);
           return;
       }
 
       skipNextFilterRef.current = true;
       setFilterQuery("");
+      setFilterNotice(null);
+      setSelectedFilterMode('quick');
 
       if (activeFilterNode) {
           setIsFiltering(true);
@@ -120,6 +131,9 @@ function App() {
           } else {
             console.log("Applying advanced filter...");
             // Clear simple filter input visually
+            if (filterQuery.trim().length > 0) {
+                setFilterNotice("Quick Filter wurde deaktiviert, weil ein Advanced-Filter aktiv ist.");
+            }
             setFilterQuery(""); 
             await applyAdvancedFilter(node);
           }
@@ -128,6 +142,11 @@ function App() {
           console.log("Total rows:", total);
           setRowCount(total);
           setGroupingInfo(null);
+          if (node) {
+              setSelectedFilterMode('advanced');
+          } else if (!filterQuery.trim()) {
+              setSelectedFilterMode('quick');
+          }
       } catch (err: any) {
           console.error("Error in handleAdvancedFilter:", err);
           setError(err.toString());
@@ -153,6 +172,39 @@ function App() {
 
       return () => window.clearTimeout(timeout);
   }, [filterQuery, filePath, activeFilterNode]);
+
+  async function handleFilterModeToggle(nextMode: 'quick' | 'advanced') {
+      if (selectedFilterMode === nextMode) {
+          return;
+      }
+
+      const switchingFromQuick = activeFilterMode === 'quick' && nextMode === 'advanced';
+      const switchingFromAdvanced = activeFilterMode === 'advanced' && nextMode === 'quick';
+
+      if (switchingFromQuick || switchingFromAdvanced) {
+          const confirmed = window.confirm("Beim Wechsel des Filtermodus wird der aktive Filter gelöscht. Fortfahren?");
+          if (!confirmed) {
+              return;
+          }
+      }
+
+      if (switchingFromQuick) {
+          setFilterNotice("Quick Filter wurde deaktiviert, weil auf Advanced-Filter gewechselt wurde.");
+          await runSimpleFilter("");
+          setFilterQuery("");
+      }
+
+      if (switchingFromAdvanced) {
+          setFilterNotice("Advanced-Filter wurde deaktiviert, weil auf Quick Filter gewechselt wurde.");
+          await handleAdvancedFilter(null);
+      }
+
+      if (!switchingFromQuick && !switchingFromAdvanced) {
+          setFilterNotice(`Filtermodus gewechselt: ${nextMode === 'quick' ? 'Quick Filter' : 'Advanced Filter'}.`);
+      }
+
+      setSelectedFilterMode(nextMode);
+  }
 
   async function handleGroup(column: string, agg: AggregationType) {
       setLoading(true);
@@ -259,14 +311,32 @@ function App() {
         <h1>CSV High Performance Analyzer</h1>
         <div className="controls">
             <div className="filter-control">
+                <div className="filter-toggle" role="group" aria-label="Filtermodus">
+                    <button
+                        type="button"
+                        className={`filter-toggle-btn ${selectedFilterMode === 'quick' ? 'active' : ''}`}
+                        onClick={() => handleFilterModeToggle('quick')}
+                        disabled={!filePath}
+                    >
+                        Quick Filter
+                    </button>
+                    <button
+                        type="button"
+                        className={`filter-toggle-btn ${selectedFilterMode === 'advanced' ? 'active' : ''}`}
+                        onClick={() => handleFilterModeToggle('advanced')}
+                        disabled={!filePath}
+                    >
+                        Advanced Filter
+                    </button>
+                </div>
                 <div className="filter-input-wrapper">
                     <input 
                         type="text" 
                         placeholder="Quick Filter..." 
-                        className="filter-input"
+                        className={`filter-input ${isQuickFilterOverridden ? 'filter-input-overridden' : ''}`}
                         value={filterQuery}
                         onChange={handleFilterChange}
-                        disabled={!filePath}
+                        disabled={!filePath || isQuickFilterOverridden}
                     />
                     {filterQuery.length > 0 && (
                         <button
@@ -279,6 +349,9 @@ function App() {
                         </button>
                     )}
                 </div>
+                {isQuickFilterOverridden && (
+                    <span className="filter-override">Quick Filter überschrieben</span>
+                )}
                 {isFiltering && <span className="filter-status">Filtering…</span>}
             </div>
             <button onClick={handleOpenFile} className="primary-btn">
@@ -290,6 +363,25 @@ function App() {
 
       {filePath && (
         <div className="status-strip" role="status" aria-live="polite">
+          <div className="status-chip status-chip-neutral">
+            <span>
+              Filtermodus: {activeFilterMode === 'quick' ? 'Quick Filter' : activeFilterMode === 'advanced' ? 'Advanced Filter' : 'Keiner'}
+            </span>
+          </div>
+          {filterNotice && (
+            <div className="status-chip status-chip-warning">
+              <span>{filterNotice}</span>
+              <button
+                type="button"
+                className="status-chip-clear"
+                onClick={() => setFilterNotice(null)}
+                aria-label="Hinweis schließen"
+                title="Hinweis schließen"
+              >
+                ×
+              </button>
+            </div>
+          )}
           {sortCol && (
             <div className="status-chip">
               <span>Sort: {sortCol} {sortDesc ? "↓" : "↑"}</span>
@@ -307,7 +399,7 @@ function App() {
           {(filterQuery.trim().length > 0 || activeFilterNode) && (
             <div className="status-chip">
               <span>
-                Filter: {activeFilterNode ? "Advanced filter" : `"${filterQuery}"`}
+                Filter: {activeFilterNode ? "Advanced Filter aktiv" : `Quick Filter "${filterQuery}"`}
               </span>
               <button
                 type="button"
@@ -336,7 +428,7 @@ function App() {
               </button>
             </div>
           )}
-          {!sortCol && !filterQuery.trim() && !activeFilterNode && !groupingInfo && (
+          {!sortCol && !filterQuery.trim() && !activeFilterNode && !groupingInfo && !filterNotice && (
             <span className="status-empty">No active sort, filters, or grouping.</span>
           )}
         </div>
